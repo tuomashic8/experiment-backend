@@ -403,8 +403,357 @@ HTML_TEMPLATE = """
 </body>
 </html>
 """
+# ========== 量表页面 ==========
+SURVEY_PAGE = """
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>记忆偏好评估</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+        .container {
+            background: white;
+            max-width: 750px;
+            width: 100%;
+            padding: 30px 25px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            margin-top: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            font-size: 24px;
+            margin-bottom: 6px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #95a5a6;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+        .instruction {
+            background: #f7f9fc;
+            border-radius: 10px;
+            padding: 14px 18px;
+            margin-bottom: 25px;
+            font-size: 14px;
+            color: #555;
+            line-height: 1.8;
+            border-left: 4px solid #667eea;
+        }
+        .instruction strong { color: #2c3e50; }
+        .question-item {
+            padding: 16px 0;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        .question-item:last-child { border-bottom: none; }
+        .question-text {
+            font-size: 15px;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+        .question-text .qnum {
+            color: #667eea;
+            font-weight: 700;
+        }
+        .options {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            padding-left: 4px;
+        }
+        .options label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            font-size: 14px;
+            padding: 6px 14px;
+            border-radius: 8px;
+            background: #f5f6fa;
+            cursor: pointer;
+            transition: 0.2s;
+            border: 2px solid transparent;
+            user-select: none;
+        }
+        .options label:hover { background: #e8ecf1; }
+        .options input[type="radio"] {
+            accent-color: #667eea;
+            width: 16px;
+            height: 16px;
+            margin: 0;
+        }
+        .options label:has(input:checked) {
+            background: #eef1ff;
+            border-color: #667eea;
+        }
+        .btn-submit {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 25px;
+            transition: 0.3s;
+        }
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(102,126,234,0.4);
+        }
+        .btn-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .error-msg {
+            color: #e74c3c;
+            background: #fde8e8;
+            padding: 12px 18px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 14px;
+            display: none;
+        }
+        .error-msg.show { display: block; }
+        .loading-text {
+            text-align: center;
+            color: #667eea;
+            font-size: 16px;
+            margin-top: 20px;
+            display: none;
+        }
+        .loading-text.show { display: block; }
+        @media (max-width: 500px) {
+            .container { padding: 20px 15px; }
+            .options label { padding: 5px 10px; font-size: 13px; }
+            .question-text { font-size: 14px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📋 记忆偏好评估</h1>
+        <p class="subtitle">请根据您的实际情况作答</p>
 
+        <div class="instruction">
+            <p><strong>评分说明：</strong></p>
+            <p>1 = 完全不符合 &nbsp;&nbsp; 2 = 比较不符合 &nbsp;&nbsp; 3 = 有点不符合 &nbsp;&nbsp; 4 = 一般/不确定</p>
+            <p>5 = 有点符合 &nbsp;&nbsp; 6 = 比较符合 &nbsp;&nbsp; 7 = 完全符合</p>
+            <p style="margin-top:6px;color:#888;font-size:13px;">请逐题作答，答案没有对错之分。</p>
+        </div>
 
+        <div id="questions">
+            {% for q in questions %}
+            <div class="question-item">
+                <div class="question-text">
+                    <span class="qnum">{{ loop.index }}.</span> {{ q }}
+                </div>
+                <div class="options">
+                    {% for i in range(1, 8) %}
+                    <label>
+                        <input type="radio" name="q{{ loop.parent.loop.index }}" value="{{ i }}" required>
+                        {{ i }}
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="error-msg" id="errorMsg">请完成所有题目的作答。</div>
+        <div class="loading-text" id="loadingText">⏳ 正在生成您的专属学习材料，请稍候...</div>
+
+        <button class="btn-submit" id="submitBtn">提交并生成学习材料</button>
+    </div>
+
+    <script>
+        document.getElementById('submitBtn').addEventListener('click', function() {
+            var btn = this;
+            var errorMsg = document.getElementById('errorMsg');
+            var loadingText = document.getElementById('loadingText');
+
+            // 收集所有答案
+            var answers = [];
+            var allAnswered = true;
+
+            for (var i = 1; i <= 10; i++) {
+                var radios = document.querySelectorAll('input[name="q' + i + '"]');
+                var selected = false;
+                for (var j = 0; j < radios.length; j++) {
+                    if (radios[j].checked) {
+                        answers.push(radios[j].value);
+                        selected = true;
+                        break;
+                    }
+                }
+                if (!selected) {
+                    allAnswered = false;
+                    break;
+                }
+            }
+
+            if (!allAnswered) {
+                errorMsg.classList.add('show');
+                return;
+            }
+            errorMsg.classList.remove('show');
+
+            // 禁用按钮，显示加载状态
+            btn.disabled = true;
+            btn.textContent = '⏳ 生成中...';
+            loadingText.classList.add('show');
+
+            // 提交到后端
+            var url = '/generate_from_survey?q1=' + answers[0] +
+                      '&q2=' + answers[1] +
+                      '&q3=' + answers[2] +
+                      '&q4=' + answers[3] +
+                      '&q5=' + answers[4] +
+                      '&q6=' + answers[5] +
+                      '&q7=' + answers[6] +
+                      '&q8=' + answers[7] +
+                      '&q9=' + answers[8] +
+                      '&q10=' + answers[9];
+
+            window.location.href = url;
+        });
+    </script>
+</body>
+</html>
+"""
+@app.route('/survey')
+def survey():
+    """显示记忆偏好量表页面"""
+    questions = [
+        "阅读小说时，我通常会在脑海中形成清晰详细的场景或房间的画面",
+        "当我在脑海里回忆或想象某个东西时，它的大小、颜色和轮廓都跟我现实里见过的一样",
+        "我可以轻松记住别人可能注意不到的大量视觉细节",
+        "我闭上眼睛就能轻松地回想我经历过的场景画面",
+        "我回忆人们的外貌和姿态会比回忆他们说过的话要详细得多",
+        "如果想要了解一个物体或人物，我更愿意查看文字描述，而不是看图片",
+        "当我回忆某个场景时，会更容易回想起对它的语言描述，而较难在脑海中浮现画面",
+        "我有时会难以精确表达自己想要说的意思",
+        "我觉得自己在遣词造句方面有较好的能力",
+        "我常常能很好地复述和转述复杂的信息"
+    ]
+    return render_template_string(SURVEY_PAGE, questions=questions)
+   @app.route('/generate_from_survey')
+def generate_from_survey():
+    """从量表提交生成学习材料"""
+    # ===== 1. 获取10个量表题的分数 =====
+    try:
+        q1 = int(request.args.get('q1', 0))
+        q2 = int(request.args.get('q2', 0))
+        q3 = int(request.args.get('q3', 0))
+        q4 = int(request.args.get('q4', 0))
+        q5 = int(request.args.get('q5', 0))
+        q6 = int(request.args.get('q6', 0))
+        q7 = int(request.args.get('q7', 0))
+        q8 = int(request.args.get('q8', 0))
+        q9 = int(request.args.get('q9', 0))
+        q10 = int(request.args.get('q10', 0))
+    except ValueError:
+        return "参数格式错误，请重新作答", 400
+
+    # ===== 2. 计算 MapScore =====
+    o_mean = (q1 + q2 + q3 + q4 + q5) / 5
+    v_mean = (q6 + q7 + (8 - q8) + q9 + q10) / 5
+    mapScore = ((v_mean - o_mean + 6) / 12) * 100
+    mapScore = round(mapScore, 2)
+
+    # ===== 3. 调用 DeepSeek API =====
+    try:
+        response = requests.post(
+            DEEPSEEK_API_URL,
+            headers={
+                'Authorization': f'Bearer {DEEPSEEK_API_KEY}',
+                'Content-Type': 'application/json'
+            },
+            json={
+                'model': 'deepseek-chat',
+                'messages': [
+                    {'role': 'system', 'content': SYSTEM_PROMPT},
+                    {'role': 'user', 'content': str(mapScore)}
+                ],
+                'temperature': 0.1,
+                'max_tokens': 4000
+            },
+            timeout=30
+        )
+
+        result = response.json()
+        ai_output = result['choices'][0]['message']['content']
+
+    except Exception as e:
+        return f"材料生成失败，请稍后重试。错误信息：{str(e)}", 500
+
+    # ===== 4. 解析AI输出 =====
+    lines = ai_output.strip().split('\n')
+
+    materials = []
+    code = ''
+
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+
+        if line.startswith('验证码：'):
+            code = line.replace('验证码：', '').strip()
+            continue
+
+        if line.startswith('【画面想象】'):
+            content = line.replace('【画面想象】', '').strip()
+            materials.append({
+                'type': 'visual',
+                'prefix': '【画面想象】',
+                'content': content
+            })
+        elif line.startswith('【要点记忆】'):
+            content = line.replace('【要点记忆】', '').strip()
+            materials.append({
+                'type': 'verbal',
+                'prefix': '【要点记忆】',
+                'content': content
+            })
+        elif line.startswith('根据你的记忆偏好'):
+            continue
+        elif '视觉引导提示' in line or '语言引导提示' in line:
+            continue
+
+    visual_count = sum(1 for m in materials if m['type'] == 'visual')
+    verbal_count = sum(1 for m in materials if m['type'] == 'verbal')
+
+    if not code:
+        code = str(random.randint(1000, 9999))
+
+    # ===== 5. 渲染页面 =====
+    return render_template_string(
+        HTML_TEMPLATE,
+        score=mapScore,
+        materials=materials,
+        code=code,
+        visual_count=visual_count,
+        verbal_count=verbal_count
+    )
 @app.route('/generate')
 def generate():
     """生成个性化学习材料"""
@@ -509,6 +858,7 @@ def generate():
 @app.route('/')
 def index():
     return "实验材料生成服务正在运行。请使用 /generate?score=数字 来获取学习材料。"
+   
 
 
 if __name__ == '__main__':
