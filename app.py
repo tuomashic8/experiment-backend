@@ -127,6 +127,136 @@ SYSTEM_PROMPT = """你是一个严格按照规则执行的材料组装器，不�
 - 如果用户输入的不是0-100的数字，只输出\"请输入0-100之间的数字\"。"""
 
 # HTML页面模板
+# ========== 学习材料展示页面模板 ==========
+HTML_TEMPLATE = """
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>你的专属学习材料</title>
+    <style>
+        body {
+            font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+            padding: 30px 20px;
+            max-width: 750px;
+            margin: 0 auto;
+            background-color: #f0f2f5;
+            min-height: 100vh;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 22px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.35);
+        }
+        .header h1 { font-size: 22px; font-weight: 700; }
+        .header .sub { font-size: 14px; opacity: 0.9; margin-top: 6px; }
+        .header .stats {
+            font-size: 13px;
+            opacity: 0.85;
+            margin-top: 4px;
+            background: rgba(255,255,255,0.15);
+            display: inline-block;
+            padding: 4px 16px;
+            border-radius: 20px;
+        }
+        .material {
+            background: white;
+            padding: 16px 20px;
+            margin: 12px 0;
+            border-radius: 10px;
+            border-left: 5px solid #667eea;
+            line-height: 1.9;
+            font-size: 15px;
+            color: #2c3e50;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .material.visual { border-left-color: #4CAF50; }
+        .material.verbal { border-left-color: #2196F3; }
+        .material .prefix { font-weight: 700; display: inline-block; margin-right: 6px; }
+        .material.visual .prefix { color: #4CAF50; }
+        .material.verbal .prefix { color: #2196F3; }
+        .code-box {
+            background: #fff8e1;
+            border: 2px dashed #f39c12;
+            border-radius: 12px;
+            padding: 18px 20px;
+            margin: 20px 0 16px 0;
+            text-align: center;
+        }
+        .code-box p { font-size: 14px; color: #7f8c8d; margin-bottom: 6px; }
+        .code-box .code {
+            font-size: 34px;
+            font-weight: 900;
+            color: #e74c3c;
+            letter-spacing: 8px;
+            background: white;
+            padding: 6px 28px;
+            border-radius: 8px;
+            display: inline-block;
+            border: 1px solid #f39c12;
+        }
+        .btn-close {
+            display: block;
+            background: linear-gradient(135deg, #27AE60, #1E8449);
+            color: white;
+            border: none;
+            padding: 14px 44px;
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 10px auto 6px auto;
+            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.35);
+            transition: all 0.3s ease;
+            width: fit-content;
+        }
+        .btn-close:hover { transform: translateY(-2px); box-shadow: 0 6px 25px rgba(39, 174, 96, 0.5); }
+        .footer-tip {
+            text-align: center;
+            font-size: 13px;
+            color: #95a5a6;
+            margin-top: 20px;
+            padding-top: 14px;
+            border-top: 1px solid #ecf0f1;
+        }
+        @media (max-width: 500px) {
+            .header h1 { font-size: 18px; }
+            .code-box .code { font-size: 26px; letter-spacing: 4px; }
+            .material { font-size: 14px; padding: 14px 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📚 你的专属学习材料</h1>
+        <div class="sub">映射分数：{{ score }} 分</div>
+        <div class="stats">视觉引导：{{ visual_count }} 条 &nbsp;·&nbsp; 语言引导：{{ verbal_count }} 条</div>
+    </div>
+
+    {% for item in materials %}
+    <div class="material {{ item.type }}">
+        <span class="prefix">{{ item.prefix }}</span>{{ item.content }}
+    </div>
+    {% endfor %}
+
+    <div class="code-box">
+        <p>🔑 学习完成后，请返回问卷页面输入以下验证码：</p>
+        <div class="code">{{ code }}</div>
+    </div>
+
+    <button class="btn-close" onclick="window.close();">✅ 已完成学习，关闭此页面</button>
+
+    <div class="footer-tip">
+        ⏳ 请仔细阅读学习材料，然后关闭此页面返回问卷。
+    </div>
+</body>
+</html>
+"""
 # ========== 量表页面模板 ==========
 SURVEY_PAGE = """
 <!DOCTYPE html>
