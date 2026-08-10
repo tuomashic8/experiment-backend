@@ -135,77 +135,295 @@ HTML_TEMPLATE = """
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>你的专属学习材料</title>
     <style>
-        body {
-            font-family: "Microsoft YaHei", sans-serif;
-            padding: 30px 20px;
-            max-width: 700px;
-            margin: 0 auto;
-            background-color: #f5f5f5;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
+        body {
+            font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+            padding: 30px 20px;
+            max-width: 750px;
+            margin: 0 auto;
+            background-color: #f0f2f5;
+            min-height: 100vh;
+        }
+
+        /* ===== 顶部标题 ===== */
         .header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 20px;
-            border-radius: 10px;
+            padding: 22px 20px;
+            border-radius: 12px;
             margin-bottom: 20px;
             text-align: center;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.35);
         }
+        .header h1 {
+            font-size: 22px;
+            font-weight: 700;
+        }
+        .header .sub {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-top: 6px;
+        }
+        .header .stats {
+            font-size: 13px;
+            opacity: 0.85;
+            margin-top: 4px;
+            background: rgba(255,255,255,0.15);
+            display: inline-block;
+            padding: 4px 16px;
+            border-radius: 20px;
+        }
+
+        /* ===== 倒计时（固定顶栏） ===== */
+        .timer-container {
+            position: sticky;
+            top: 10px;
+            z-index: 100;
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 16px;
+        }
+        .timer-box {
+            background: linear-gradient(135deg, #4A90D9, #357ABD);
+            color: white;
+            padding: 10px 26px;
+            border-radius: 50px;
+            font-size: 22px;
+            font-weight: 700;
+            box-shadow: 0 4px 15px rgba(74, 144, 217, 0.4);
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .timer-box.time-up {
+            background: linear-gradient(135deg, #27AE60, #1E8449);
+            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.4);
+        }
+        .timer-box .icon { font-size: 20px; }
+
+        /* ===== 学习材料卡片 ===== */
         .material {
             background: white;
-            padding: 15px 20px;
-            margin: 10px 0;
-            border-radius: 8px;
-            border-left: 4px solid #667eea;
-            line-height: 1.8;
+            padding: 16px 20px;
+            margin: 12px 0;
+            border-radius: 10px;
+            border-left: 5px solid #667eea;
+            line-height: 1.9;
+            font-size: 15px;
+            color: #2c3e50;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            transition: transform 0.15s;
         }
+        .material:hover { transform: translateX(4px); }
         .material.visual { border-left-color: #4CAF50; }
         .material.verbal { border-left-color: #2196F3; }
-        .prefix {
-            font-weight: bold;
-            margin-right: 8px;
+        .material .prefix {
+            font-weight: 700;
+            display: inline-block;
+            margin-right: 6px;
         }
-        .visual .prefix { color: #4CAF50; }
-        .verbal .prefix { color: #2196F3; }
+        .material.visual .prefix { color: #4CAF50; }
+        .material.verbal .prefix { color: #2196F3; }
+
+        /* ===== 验证码区域 ===== */
         .code-box {
-            background: #fff;
-            border: 2px dashed #667eea;
-            padding: 15px;
+            background: #fff8e1;
+            border: 2px dashed #f39c12;
+            border-radius: 12px;
+            padding: 18px 20px;
+            margin: 20px 0 16px 0;
             text-align: center;
-            margin-top: 20px;
+        }
+        .code-box p {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-bottom: 6px;
+        }
+        .code-box .code {
+            font-size: 34px;
+            font-weight: 900;
+            color: #e74c3c;
+            letter-spacing: 8px;
+            background: white;
+            padding: 6px 28px;
             border-radius: 8px;
+            display: inline-block;
+            border: 1px solid #f39c12;
         }
-        .code {
-            font-size: 28px;
-            font-weight: bold;
-            color: #667eea;
-            letter-spacing: 4px;
+
+        /* ===== 关闭按钮 ===== */
+        .btn-close {
+            display: none;
+            background: linear-gradient(135deg, #27AE60, #1E8449);
+            color: white;
+            border: none;
+            padding: 14px 44px;
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 10px auto 6px auto;
+            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.35);
+            transition: all 0.3s ease;
+            width: fit-content;
         }
-        .back-link {
+        .btn-close.show { display: block; }
+        .btn-close:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(39, 174, 96, 0.5);
+        }
+        .btn-close:active { transform: translateY(0); }
+
+        /* ===== 底部 ===== */
+        .footer-tip {
             text-align: center;
+            font-size: 13px;
+            color: #95a5a6;
             margin-top: 20px;
+            padding-top: 14px;
+            border-top: 1px solid #ecf0f1;
+        }
+        .footer-tip .highlight { color: #e74c3c; font-weight: 600; }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 500px) {
+            .header h1 { font-size: 18px; }
+            .timer-box { font-size: 18px; padding: 8px 18px; }
+            .code-box .code { font-size: 26px; letter-spacing: 4px; }
+            .material { font-size: 14px; padding: 14px 16px; }
         }
     </style>
 </head>
 <body>
+
+    <!-- ===== 顶部 ===== -->
     <div class="header">
-        <h2>你的专属学习材料</h2>
-        <p>映射分数：{{ score }} 分 | 视觉引导：{{ visual_count }} 条 | 语言引导：{{ verbal_count }} 条</p>
+        <h1>📚 你的专属学习材料</h1>
+        <div class="sub">映射分数：{{ score }} 分</div>
+        <div class="stats">视觉引导：{{ visual_count }} 条 &nbsp;·&nbsp; 语言引导：{{ verbal_count }} 条</div>
     </div>
 
+    <!-- ===== 倒计时 ===== -->
+    <div class="timer-container">
+        <div class="timer-box" id="timerBox">
+            <span class="icon">⏱️</span>
+            <span id="timerDisplay">03:00</span>
+        </div>
+    </div>
+
+    <!-- ===== 学习材料 ===== -->
     {% for item in materials %}
     <div class="material {{ item.type }}">
         <span class="prefix">{{ item.prefix }}</span>{{ item.content }}
     </div>
     {% endfor %}
 
+    <!-- ===== 验证码 ===== -->
     <div class="code-box">
-        <p>学习完成后，请返回问卷页面输入以下验证码：</p>
+        <p>🔑 学习完成后，请返回问卷页面输入以下验证码：</p>
         <div class="code">{{ code }}</div>
     </div>
 
-    <div class="back-link">
-        <p>请关闭本页面，返回问卷继续答题。</p>
+    <!-- ===== 关闭按钮（倒计时结束后出现） ===== -->
+    <button class="btn-close" id="closeBtn" onclick="closePage()">
+        ✅ 已完成学习，关闭此页面
+    </button>
+
+    <!-- ===== 底部 ===== -->
+    <div class="footer-tip">
+        <span class="highlight">⏳ 请耐心等待倒计时结束</span> · 学习时间：3分钟
     </div>
+
+    <!-- ============================================================ -->
+    <!-- JavaScript：倒计时逻辑                                         -->
+    <!-- ============================================================ -->
+    <script>
+        (function() {
+            const TOTAL_SECONDS = 180;   // 3分钟
+            const timerDisplay = document.getElementById('timerDisplay');
+            const timerBox = document.getElementById('timerBox');
+            const closeBtn = document.getElementById('closeBtn');
+
+            let remaining = TOTAL_SECONDS;
+            let timerId = null;
+            let isTimeUp = false;
+
+            function formatTime(seconds) {
+                const m = String(Math.floor(seconds / 60)).padStart(2, '0');
+                const s = String(seconds % 60).padStart(2, '0');
+                return m + ':' + s;
+            }
+
+            function updateDisplay() {
+                timerDisplay.textContent = formatTime(remaining);
+            }
+
+            function onTimeUp() {
+                if (isTimeUp) return;
+                isTimeUp = true;
+
+                if (timerId) {
+                    clearInterval(timerId);
+                    timerId = null;
+                }
+
+                timerBox.classList.add('time-up');
+                timerDisplay.textContent = '✅ 时间到！';
+                closeBtn.classList.add('show');
+
+                const footer = document.querySelector('.footer-tip');
+                if (footer) {
+                    footer.innerHTML = '✅ 学习时间结束，请点击下方按钮关闭页面，返回问卷继续作答。';
+                }
+            }
+
+            function startTimer() {
+                if (remaining <= 0) {
+                    onTimeUp();
+                    return;
+                }
+                updateDisplay();
+
+                timerId = setInterval(function() {
+                    remaining -= 1;
+                    if (remaining <= 0) {
+                        remaining = 0;
+                        updateDisplay();
+                        onTimeUp();
+                    } else {
+                        updateDisplay();
+                    }
+                }, 1000);
+            }
+
+            window.closePage = function() {
+                window.close();
+                // 如果无法自动关闭，提供备用提示
+                setTimeout(function() {
+                    document.body.innerHTML = `
+                        <div style="text-align:center;padding:80px 20px;font-family:sans-serif;">
+                            <h2 style="color:#27AE60;">✅ 学习已完成</h2>
+                            <p style="color:#555;margin-top:15px;">请手动关闭此浏览器标签页，返回问卷继续作答。</p>
+                            <p style="color:#999;font-size:14px;margin-top:10px;">验证码：<strong style="color:#e74c3c;">{{ code }}</strong></p>
+                        </div>
+                    `;
+                }, 300);
+            };
+
+            // 启动
+            if (remaining <= 0) {
+                onTimeUp();
+            } else {
+                startTimer();
+            }
+        })();
+    </script>
+
 </body>
 </html>
 """
