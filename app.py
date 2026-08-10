@@ -127,283 +127,7 @@ SYSTEM_PROMPT = """你是一个严格按照规则执行的材料组装器，不�
 - 如果用户输入的不是0-100的数字，只输出\"请输入0-100之间的数字\"。"""
 
 # HTML页面模板
-HTML_TEMPLATE = """
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>你的专属学习材料</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
-            padding: 30px 20px;
-            max-width: 750px;
-            margin: 0 auto;
-            background-color: #f0f2f5;
-            min-height: 100vh;
-        }
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 22px 20px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            text-align: center;
-            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.35);
-        }
-        .header h1 {
-            font-size: 22px;
-            font-weight: 700;
-        }
-        .header .sub {
-            font-size: 14px;
-            opacity: 0.9;
-            margin-top: 6px;
-        }
-        .header .stats {
-            font-size: 13px;
-            opacity: 0.85;
-            margin-top: 4px;
-            background: rgba(255,255,255,0.15);
-            display: inline-block;
-            padding: 4px 16px;
-            border-radius: 20px;
-        }
-        .timer-container {
-            position: sticky;
-            top: 10px;
-            z-index: 100;
-            display: flex;
-            justify-content: flex-end;
-            margin-bottom: 16px;
-        }
-        .timer-box {
-            background: linear-gradient(135deg, #4A90D9, #357ABD);
-            color: white;
-            padding: 10px 26px;
-            border-radius: 50px;
-            font-size: 22px;
-            font-weight: 700;
-            box-shadow: 0 4px 15px rgba(74, 144, 217, 0.4);
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .timer-box.time-up {
-            background: linear-gradient(135deg, #27AE60, #1E8449);
-            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.4);
-        }
-        .timer-box .icon { font-size: 20px; }
-        .material {
-            background: white;
-            padding: 16px 20px;
-            margin: 12px 0;
-            border-radius: 10px;
-            border-left: 5px solid #667eea;
-            line-height: 1.9;
-            font-size: 15px;
-            color: #2c3e50;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-            transition: transform 0.15s;
-        }
-        .material:hover { transform: translateX(4px); }
-        .material.visual { border-left-color: #4CAF50; }
-        .material.verbal { border-left-color: #2196F3; }
-        .material .prefix {
-            font-weight: 700;
-            display: inline-block;
-            margin-right: 6px;
-        }
-        .material.visual .prefix { color: #4CAF50; }
-        .material.verbal .prefix { color: #2196F3; }
-        .code-box {
-            background: #fff8e1;
-            border: 2px dashed #f39c12;
-            border-radius: 12px;
-            padding: 18px 20px;
-            margin: 20px 0 16px 0;
-            text-align: center;
-        }
-        .code-box p {
-            font-size: 14px;
-            color: #7f8c8d;
-            margin-bottom: 6px;
-        }
-        .code-box .code {
-            font-size: 34px;
-            font-weight: 900;
-            color: #e74c3c;
-            letter-spacing: 8px;
-            background: white;
-            padding: 6px 28px;
-            border-radius: 8px;
-            display: inline-block;
-            border: 1px solid #f39c12;
-        }
-        .btn-close {
-            display: none;
-            background: linear-gradient(135deg, #27AE60, #1E8449);
-            color: white;
-            border: none;
-            padding: 14px 44px;
-            border-radius: 50px;
-            font-size: 18px;
-            font-weight: 600;
-            cursor: pointer;
-            margin: 10px auto 6px auto;
-            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.35);
-            transition: all 0.3s ease;
-            width: fit-content;
-        }
-        .btn-close.show { display: block; }
-        .btn-close:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 25px rgba(39, 174, 96, 0.5);
-        }
-        .btn-close:active { transform: translateY(0); }
-        .footer-tip {
-            text-align: center;
-            font-size: 13px;
-            color: #95a5a6;
-            margin-top: 20px;
-            padding-top: 14px;
-            border-top: 1px solid #ecf0f1;
-        }
-        .footer-tip .highlight { color: #e74c3c; font-weight: 600; }
-        @media (max-width: 500px) {
-            .header h1 { font-size: 18px; }
-            .timer-box { font-size: 18px; padding: 8px 18px; }
-            .code-box .code { font-size: 26px; letter-spacing: 4px; }
-            .material { font-size: 14px; padding: 14px 16px; }
-        }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h1>📚 你的专属学习材料</h1>
-        <div class="sub">映射分数：{{ score }} 分</div>
-        <div class="stats">视觉引导：{{ visual_count }} 条 &nbsp;·&nbsp; 语言引导：{{ verbal_count }} 条</div>
-    </div>
-    <div class="timer-container">
-        <div class="timer-box" id="timerBox">
-            <span class="icon">⏱️</span>
-            <span id="timerDisplay">03:00</span>
-        </div>
-    </div>
-    <div id="materialsContainer">
-        {% for item in materials %}
-        <div class="material {{ item.type }}">
-            <span class="prefix">{{ item.prefix }}</span>{{ item.content }}
-        </div>
-        {% endfor %}
-    </div>
-    <div class="code-box">
-        <p>🔑 学习完成后，请返回问卷页面输入以下验证码：</p>
-        <div class="code">{{ code }}</div>
-    </div>
-    <button class="btn-close" id="closeBtn" onclick="closePage()">
-        ✅ 已完成学习，关闭此页面
-    </button>
-    <div class="footer-tip">
-        <span class="highlight">⏳ 请耐心等待倒计时结束</span> · 学习时间：3分钟
-    </div>
-    <script>
-        (function() {
-            const TOTAL_SECONDS = 180;
-            const timerDisplay = document.getElementById('timerDisplay');
-            const timerBox = document.getElementById('timerBox');
-            const closeBtn = document.getElementById('closeBtn');
-            const materialsContainer = document.getElementById('materialsContainer');
-
-            let remaining = TOTAL_SECONDS;
-            let timerId = null;
-            let isTimeUp = false;
-
-            function formatTime(seconds) {
-                const m = String(Math.floor(seconds / 60)).padStart(2, '0');
-                const s = String(seconds % 60).padStart(2, '0');
-                return m + ':' + s;
-            }
-
-            function updateDisplay() {
-                timerDisplay.textContent = formatTime(remaining);
-            }
-
-            function onTimeUp() {
-                if (isTimeUp) return;
-                isTimeUp = true;
-
-                if (timerId) {
-                    clearInterval(timerId);
-                    timerId = null;
-                }
-
-                timerBox.classList.add('time-up');
-                timerDisplay.textContent = '✅ 时间到！';
-
-                // 隐藏学习材料
-                if (materialsContainer) {
-                    materialsContainer.style.display = 'none';
-                }
-
-                closeBtn.classList.add('show');
-
-                const footer = document.querySelector('.footer-tip');
-                if (footer) {
-                    footer.innerHTML = '✅ 学习时间结束，材料已隐藏。请关闭此页面，返回问卷继续作答。';
-                }
-            }
-
-            function startTimer() {
-                if (remaining <= 0) {
-                    onTimeUp();
-                    return;
-                }
-                updateDisplay();
-
-                timerId = setInterval(function() {
-                    remaining -= 1;
-                    if (remaining <= 0) {
-                        remaining = 0;
-                        updateDisplay();
-                        onTimeUp();
-                    } else {
-                        updateDisplay();
-                    }
-                }, 1000);
-            }
-
-            window.closePage = function() {
-                window.close();
-                setTimeout(function() {
-                    document.body.innerHTML = `
-                        <div style="text-align:center;padding:80px 20px;font-family:sans-serif;">
-                            <h2 style="color:#27AE60;">✅ 学习已完成</h2>
-                            <p style="color:#555;margin-top:15px;">请手动关闭此浏览器标签页，返回问卷继续作答。</p>
-                            <p style="color:#999;font-size:14px;margin-top:10px;">验证码：<strong style="color:#e74c3c;">{{ code }}</strong></p>
-                        </div>
-                    `;
-                }, 300);
-            };
-
-            if (remaining <= 0) {
-                onTimeUp();
-            } else {
-                startTimer();
-            }
-        })();
-    </script>
-</body>
-</html>
-"""
-# ========== 量表页面 ==========
+# ========== 量表页面模板 ==========
 SURVEY_PAGE = """
 <!DOCTYPE html>
 <html lang="zh-CN">
@@ -431,18 +155,8 @@ SURVEY_PAGE = """
             box-shadow: 0 4px 20px rgba(0,0,0,0.08);
             margin-top: 20px;
         }
-        h1 {
-            text-align: center;
-            color: #2c3e50;
-            font-size: 24px;
-            margin-bottom: 6px;
-        }
-        .subtitle {
-            text-align: center;
-            color: #95a5a6;
-            font-size: 14px;
-            margin-bottom: 20px;
-        }
+        h1 { text-align: center; color: #2c3e50; font-size: 24px; margin-bottom: 6px; }
+        .subtitle { text-align: center; color: #95a5a6; font-size: 14px; margin-bottom: 20px; }
         .instruction {
             background: #f7f9fc;
             border-radius: 10px;
@@ -454,27 +168,11 @@ SURVEY_PAGE = """
             border-left: 4px solid #667eea;
         }
         .instruction strong { color: #2c3e50; }
-        .question-item {
-            padding: 16px 0;
-            border-bottom: 1px solid #ecf0f1;
-        }
+        .question-item { padding: 16px 0; border-bottom: 1px solid #ecf0f1; }
         .question-item:last-child { border-bottom: none; }
-        .question-text {
-            font-size: 15px;
-            color: #2c3e50;
-            margin-bottom: 10px;
-            line-height: 1.6;
-        }
-        .question-text .qnum {
-            color: #667eea;
-            font-weight: 700;
-        }
-        .options {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-            padding-left: 4px;
-        }
+        .question-text { font-size: 15px; color: #2c3e50; margin-bottom: 10px; line-height: 1.6; }
+        .question-text .qnum { color: #667eea; font-weight: 700; }
+        .options { display: flex; gap: 6px; flex-wrap: wrap; padding-left: 4px; }
         .options label {
             display: flex;
             align-items: center;
@@ -490,16 +188,8 @@ SURVEY_PAGE = """
             user-select: none;
         }
         .options label:hover { background: #e8ecf1; }
-        .options input[type="radio"] {
-            accent-color: #667eea;
-            width: 16px;
-            height: 16px;
-            margin: 0;
-        }
-        .options label:has(input:checked) {
-            background: #eef1ff;
-            border-color: #667eea;
-        }
+        .options input[type="radio"] { accent-color: #667eea; width: 16px; height: 16px; margin: 0; }
+        .options label:has(input:checked) { background: #eef1ff; border-color: #667eea; }
         .btn-submit {
             display: block;
             width: 100%;
@@ -514,32 +204,11 @@ SURVEY_PAGE = """
             margin-top: 25px;
             transition: 0.3s;
         }
-        .btn-submit:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 25px rgba(102,126,234,0.4);
-        }
-        .btn-submit:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-        .error-msg {
-            color: #e74c3c;
-            background: #fde8e8;
-            padding: 12px 18px;
-            border-radius: 8px;
-            margin-top: 15px;
-            font-size: 14px;
-            display: none;
-        }
+        .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 6px 25px rgba(102,126,234,0.4); }
+        .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .error-msg { color: #e74c3c; background: #fde8e8; padding: 12px 18px; border-radius: 8px; margin-top: 15px; font-size: 14px; display: none; }
         .error-msg.show { display: block; }
-        .loading-text {
-            text-align: center;
-            color: #667eea;
-            font-size: 16px;
-            margin-top: 20px;
-            display: none;
-        }
+        .loading-text { text-align: center; color: #667eea; font-size: 16px; margin-top: 20px; display: none; }
         .loading-text.show { display: block; }
         @media (max-width: 500px) {
             .container { padding: 20px 15px; }
@@ -552,14 +221,12 @@ SURVEY_PAGE = """
     <div class="container">
         <h1>📋 记忆偏好评估</h1>
         <p class="subtitle">请根据您的实际情况作答</p>
-
         <div class="instruction">
             <p><strong>评分说明：</strong></p>
             <p>1 = 完全不符合 &nbsp;&nbsp; 2 = 比较不符合 &nbsp;&nbsp; 3 = 有点不符合 &nbsp;&nbsp; 4 = 一般/不确定</p>
             <p>5 = 有点符合 &nbsp;&nbsp; 6 = 比较符合 &nbsp;&nbsp; 7 = 完全符合</p>
             <p style="margin-top:6px;color:#888;font-size:13px;">请逐题作答，答案没有对错之分。</p>
         </div>
-
         <div id="questions">
             {% for q in questions %}
             <div class="question-item">
@@ -577,23 +244,17 @@ SURVEY_PAGE = """
             </div>
             {% endfor %}
         </div>
-
         <div class="error-msg" id="errorMsg">请完成所有题目的作答。</div>
         <div class="loading-text" id="loadingText">⏳ 正在生成您的专属学习材料，请稍候...</div>
-
         <button class="btn-submit" id="submitBtn">提交并生成学习材料</button>
     </div>
-
     <script>
         document.getElementById('submitBtn').addEventListener('click', function() {
             var btn = this;
             var errorMsg = document.getElementById('errorMsg');
             var loadingText = document.getElementById('loadingText');
-
-            // 收集所有答案
             var answers = [];
             var allAnswered = true;
-
             for (var i = 1; i <= 10; i++) {
                 var radios = document.querySelectorAll('input[name="q' + i + '"]');
                 var selected = false;
@@ -609,19 +270,14 @@ SURVEY_PAGE = """
                     break;
                 }
             }
-
             if (!allAnswered) {
                 errorMsg.classList.add('show');
                 return;
             }
             errorMsg.classList.remove('show');
-
-            // 禁用按钮，显示加载状态
             btn.disabled = true;
             btn.textContent = '⏳ 生成中...';
             loadingText.classList.add('show');
-
-            // 提交到后端
             var url = '/generate_from_survey?q1=' + answers[0] +
                       '&q2=' + answers[1] +
                       '&q3=' + answers[2] +
@@ -632,13 +288,17 @@ SURVEY_PAGE = """
                       '&q8=' + answers[7] +
                       '&q9=' + answers[8] +
                       '&q10=' + answers[9];
-
             window.location.href = url;
         });
     </script>
 </body>
 </html>
 """
+
+
+# ============================================================
+# 路由1：显示量表页面
+# ============================================================
 @app.route('/survey')
 def survey():
     """显示记忆偏好量表页面"""
@@ -655,10 +315,14 @@ def survey():
         "我常常能很好地复述和转述复杂的信息"
     ]
     return render_template_string(SURVEY_PAGE, questions=questions)
-   @app.route('/generate_from_survey')
+
+
+# ============================================================
+# 路由2：从量表提交生成学习材料
+# ============================================================
+@app.route('/generate_from_survey')
 def generate_from_survey():
     """从量表提交生成学习材料"""
-    # ===== 1. 获取10个量表题的分数 =====
     try:
         q1 = int(request.args.get('q1', 0))
         q2 = int(request.args.get('q2', 0))
@@ -673,13 +337,11 @@ def generate_from_survey():
     except ValueError:
         return "参数格式错误，请重新作答", 400
 
-    # ===== 2. 计算 MapScore =====
     o_mean = (q1 + q2 + q3 + q4 + q5) / 5
     v_mean = (q6 + q7 + (8 - q8) + q9 + q10) / 5
     mapScore = ((v_mean - o_mean + 6) / 12) * 100
     mapScore = round(mapScore, 2)
 
-    # ===== 3. 调用 DeepSeek API =====
     try:
         response = requests.post(
             DEEPSEEK_API_URL,
@@ -698,16 +360,12 @@ def generate_from_survey():
             },
             timeout=30
         )
-
         result = response.json()
         ai_output = result['choices'][0]['message']['content']
-
     except Exception as e:
         return f"材料生成失败，请稍后重试。错误信息：{str(e)}", 500
 
-    # ===== 4. 解析AI输出 =====
     lines = ai_output.strip().split('\n')
-
     materials = []
     code = ''
 
@@ -715,11 +373,9 @@ def generate_from_survey():
         line = line.strip()
         if not line:
             continue
-
         if line.startswith('验证码：'):
             code = line.replace('验证码：', '').strip()
             continue
-
         if line.startswith('【画面想象】'):
             content = line.replace('【画面想象】', '').strip()
             materials.append({
@@ -745,7 +401,6 @@ def generate_from_survey():
     if not code:
         code = str(random.randint(1000, 9999))
 
-    # ===== 5. 渲染页面 =====
     return render_template_string(
         HTML_TEMPLATE,
         score=mapScore,
@@ -754,31 +409,22 @@ def generate_from_survey():
         visual_count=visual_count,
         verbal_count=verbal_count
     )
+
+
+# ============================================================
+# 原有的路由（保留，作为备用）
+# ============================================================
 @app.route('/generate')
 def generate():
-    """生成个性化学习材料"""
-    # ===== 1. 从URL获取10个量表题的原始分数 =====
+    """直接从分数生成学习材料（备用入口）"""
+    score_str = request.args.get('score', '50')
     try:
-        q1 = int(request.args.get('q1', 0))
-        q2 = int(request.args.get('q2', 0))
-        q3 = int(request.args.get('q3', 0))
-        q4 = int(request.args.get('q4', 0))
-        q5 = int(request.args.get('q5', 0))
-        q6 = int(request.args.get('q6', 0))
-        q7 = int(request.args.get('q7', 0))
-        q8 = int(request.args.get('q8', 0))
-        q9 = int(request.args.get('q9', 0))
-        q10 = int(request.args.get('q10', 0))
+        score = int(score_str)
+        if score < 0 or score > 100:
+            return "请输入0-100之间的数字", 400
     except ValueError:
-        return "参数格式错误，请确保所有参数为整数", 400
+        return "请输入0-100之间的数字", 400
 
-    # ===== 2. 计算 MapScore =====
-    o_mean = (q1 + q2 + q3 + q4 + q5) / 5
-    v_mean = (q6 + q7 + (8 - q8) + q9 + q10) / 5
-    mapScore = ((v_mean - o_mean + 6) / 12) * 100
-    mapScore = round(mapScore, 2)
-
-    # ===== 3. 调用 DeepSeek API =====
     try:
         response = requests.post(
             DEEPSEEK_API_URL,
@@ -790,23 +436,19 @@ def generate():
                 'model': 'deepseek-chat',
                 'messages': [
                     {'role': 'system', 'content': SYSTEM_PROMPT},
-                    {'role': 'user', 'content': str(mapScore)}
+                    {'role': 'user', 'content': str(score)}
                 ],
                 'temperature': 0.1,
                 'max_tokens': 4000
             },
             timeout=30
         )
-
         result = response.json()
         ai_output = result['choices'][0]['message']['content']
-
     except Exception as e:
         return f"材料生成失败，请稍后重试。错误信息：{str(e)}", 500
 
-    # ===== 4. 解析AI输出 =====
     lines = ai_output.strip().split('\n')
-
     materials = []
     code = ''
 
@@ -814,11 +456,9 @@ def generate():
         line = line.strip()
         if not line:
             continue
-
         if line.startswith('验证码：'):
             code = line.replace('验证码：', '').strip()
             continue
-
         if line.startswith('【画面想象】'):
             content = line.replace('【画面想象】', '').strip()
             materials.append({
@@ -844,10 +484,9 @@ def generate():
     if not code:
         code = str(random.randint(1000, 9999))
 
-    # ===== 5. 渲染页面 =====
     return render_template_string(
         HTML_TEMPLATE,
-        score=mapScore,
+        score=score,
         materials=materials,
         code=code,
         visual_count=visual_count,
@@ -858,7 +497,6 @@ def generate():
 @app.route('/')
 def index():
     return "实验材料生成服务正在运行。请使用 /generate?score=数字 来获取学习材料。"
-   
 
 
 if __name__ == '__main__':
