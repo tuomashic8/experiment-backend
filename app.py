@@ -408,16 +408,28 @@ HTML_TEMPLATE = """
 @app.route('/generate')
 def generate():
     """生成个性化学习材料"""
-    score_str = request.args.get('score', '50')
-
+    # ===== 1. 从URL获取10个量表题的原始分数 =====
     try:
-        score = int(score_str)
-        if score < 0 or score > 100:
-            return "请输入0-100之间的数字", 400
+        q1 = int(request.args.get('q1', 0))
+        q2 = int(request.args.get('q2', 0))
+        q3 = int(request.args.get('q3', 0))
+        q4 = int(request.args.get('q4', 0))
+        q5 = int(request.args.get('q5', 0))
+        q6 = int(request.args.get('q6', 0))
+        q7 = int(request.args.get('q7', 0))
+        q8 = int(request.args.get('q8', 0))
+        q9 = int(request.args.get('q9', 0))
+        q10 = int(request.args.get('q10', 0))
     except ValueError:
-        return "请输入0-100之间的数字", 400
+        return "参数格式错误，请确保所有参数为整数", 400
 
-    # 调用 DeepSeek API
+    # ===== 2. 计算 MapScore =====
+    o_mean = (q1 + q2 + q3 + q4 + q5) / 5
+    v_mean = (q6 + q7 + (8 - q8) + q9 + q10) / 5
+    mapScore = ((v_mean - o_mean + 6) / 12) * 100
+    mapScore = round(mapScore, 2)
+
+    # ===== 3. 调用 DeepSeek API =====
     try:
         response = requests.post(
             DEEPSEEK_API_URL,
@@ -429,7 +441,7 @@ def generate():
                 'model': 'deepseek-chat',
                 'messages': [
                     {'role': 'system', 'content': SYSTEM_PROMPT},
-                    {'role': 'user', 'content': str(score)}
+                    {'role': 'user', 'content': str(mapScore)}
                 ],
                 'temperature': 0.1,
                 'max_tokens': 4000
@@ -443,7 +455,7 @@ def generate():
     except Exception as e:
         return f"材料生成失败，请稍后重试。错误信息：{str(e)}", 500
 
-    # 解析AI输出，分离材料内容和验证码
+    # ===== 4. 解析AI输出 =====
     lines = ai_output.strip().split('\n')
 
     materials = []
@@ -473,23 +485,20 @@ def generate():
                 'content': content
             })
         elif line.startswith('根据你的记忆偏好'):
-            # 这是汇报比例的说明行，跳过
             continue
         elif '视觉引导提示' in line or '语言引导提示' in line:
-            # 这也是汇报比例的行，跳过
             continue
 
-    # 统计数量
     visual_count = sum(1 for m in materials if m['type'] == 'visual')
     verbal_count = sum(1 for m in materials if m['type'] == 'verbal')
 
-    # 如果AI没有生成验证码，手动生成一个
     if not code:
         code = str(random.randint(1000, 9999))
 
+    # ===== 5. 渲染页面 =====
     return render_template_string(
         HTML_TEMPLATE,
-        score=score,
+        score=mapScore,
         materials=materials,
         code=code,
         visual_count=visual_count,
