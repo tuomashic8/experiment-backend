@@ -84,7 +84,7 @@ SURVEY_PAGE = """
             <div class="options">
                 {% for i in range(1, 8) %}
                 <label>
-                    <input type="radio" name="q{{ loop.parent.loop.index }}" value="{{ i }}" required>
+                    <input type="radio" name="q{{ loop.parent.index }}" value="{{ i }}" required>
                     {{ i }}
                 </label>
                 {% endfor %}
