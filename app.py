@@ -148,8 +148,6 @@ HTML_TEMPLATE = """
             background-color: #f0f2f5;
             min-height: 100vh;
         }
-
-        /* ===== 顶部标题 ===== */
         .header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -177,8 +175,6 @@ HTML_TEMPLATE = """
             padding: 4px 16px;
             border-radius: 20px;
         }
-
-        /* ===== 倒计时（固定顶栏） ===== */
         .timer-container {
             position: sticky;
             top: 10px;
@@ -205,8 +201,6 @@ HTML_TEMPLATE = """
             box-shadow: 0 4px 15px rgba(39, 174, 96, 0.4);
         }
         .timer-box .icon { font-size: 20px; }
-
-        /* ===== 学习材料卡片 ===== */
         .material {
             background: white;
             padding: 16px 20px;
@@ -229,8 +223,6 @@ HTML_TEMPLATE = """
         }
         .material.visual .prefix { color: #4CAF50; }
         .material.verbal .prefix { color: #2196F3; }
-
-        /* ===== 验证码区域 ===== */
         .code-box {
             background: #fff8e1;
             border: 2px dashed #f39c12;
@@ -255,8 +247,6 @@ HTML_TEMPLATE = """
             display: inline-block;
             border: 1px solid #f39c12;
         }
-
-        /* ===== 关闭按钮 ===== */
         .btn-close {
             display: none;
             background: linear-gradient(135deg, #27AE60, #1E8449);
@@ -278,8 +268,6 @@ HTML_TEMPLATE = """
             box-shadow: 0 6px 25px rgba(39, 174, 96, 0.5);
         }
         .btn-close:active { transform: translateY(0); }
-
-        /* ===== 底部 ===== */
         .footer-tip {
             text-align: center;
             font-size: 13px;
@@ -289,8 +277,6 @@ HTML_TEMPLATE = """
             border-top: 1px solid #ecf0f1;
         }
         .footer-tip .highlight { color: #e74c3c; font-weight: 600; }
-
-        /* ===== 响应式 ===== */
         @media (max-width: 500px) {
             .header h1 { font-size: 18px; }
             .timer-box { font-size: 18px; padding: 8px 18px; }
@@ -300,54 +286,41 @@ HTML_TEMPLATE = """
     </style>
 </head>
 <body>
-
-    <!-- ===== 顶部 ===== -->
     <div class="header">
         <h1>📚 你的专属学习材料</h1>
         <div class="sub">映射分数：{{ score }} 分</div>
         <div class="stats">视觉引导：{{ visual_count }} 条 &nbsp;·&nbsp; 语言引导：{{ verbal_count }} 条</div>
     </div>
-
-    <!-- ===== 倒计时 ===== -->
     <div class="timer-container">
         <div class="timer-box" id="timerBox">
             <span class="icon">⏱️</span>
             <span id="timerDisplay">03:00</span>
         </div>
     </div>
-
-    <!-- ===== 学习材料 ===== -->
-    {% for item in materials %}
-    <div class="material {{ item.type }}">
-        <span class="prefix">{{ item.prefix }}</span>{{ item.content }}
+    <div id="materialsContainer">
+        {% for item in materials %}
+        <div class="material {{ item.type }}">
+            <span class="prefix">{{ item.prefix }}</span>{{ item.content }}
+        </div>
+        {% endfor %}
     </div>
-    {% endfor %}
-
-    <!-- ===== 验证码 ===== -->
     <div class="code-box">
         <p>🔑 学习完成后，请返回问卷页面输入以下验证码：</p>
         <div class="code">{{ code }}</div>
     </div>
-
-    <!-- ===== 关闭按钮（倒计时结束后出现） ===== -->
     <button class="btn-close" id="closeBtn" onclick="closePage()">
         ✅ 已完成学习，关闭此页面
     </button>
-
-    <!-- ===== 底部 ===== -->
     <div class="footer-tip">
         <span class="highlight">⏳ 请耐心等待倒计时结束</span> · 学习时间：3分钟
     </div>
-
-    <!-- ============================================================ -->
-    <!-- JavaScript：倒计时逻辑                                         -->
-    <!-- ============================================================ -->
     <script>
         (function() {
-            const TOTAL_SECONDS = 180;   // 3分钟
+            const TOTAL_SECONDS = 180;
             const timerDisplay = document.getElementById('timerDisplay');
             const timerBox = document.getElementById('timerBox');
             const closeBtn = document.getElementById('closeBtn');
+            const materialsContainer = document.getElementById('materialsContainer');
 
             let remaining = TOTAL_SECONDS;
             let timerId = null;
@@ -374,11 +347,17 @@ HTML_TEMPLATE = """
 
                 timerBox.classList.add('time-up');
                 timerDisplay.textContent = '✅ 时间到！';
+
+                // 隐藏学习材料
+                if (materialsContainer) {
+                    materialsContainer.style.display = 'none';
+                }
+
                 closeBtn.classList.add('show');
 
                 const footer = document.querySelector('.footer-tip');
                 if (footer) {
-                    footer.innerHTML = '✅ 学习时间结束，请点击下方按钮关闭页面，返回问卷继续作答。';
+                    footer.innerHTML = '✅ 学习时间结束，材料已隐藏。请关闭此页面，返回问卷继续作答。';
                 }
             }
 
@@ -403,7 +382,6 @@ HTML_TEMPLATE = """
 
             window.closePage = function() {
                 window.close();
-                // 如果无法自动关闭，提供备用提示
                 setTimeout(function() {
                     document.body.innerHTML = `
                         <div style="text-align:center;padding:80px 20px;font-family:sans-serif;">
@@ -415,7 +393,6 @@ HTML_TEMPLATE = """
                 }, 300);
             };
 
-            // 启动
             if (remaining <= 0) {
                 onTimeUp();
             } else {
@@ -423,7 +400,6 @@ HTML_TEMPLATE = """
             }
         })();
     </script>
-
 </body>
 </html>
 """
