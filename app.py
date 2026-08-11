@@ -477,3 +477,90 @@ def index():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+   @app.route('/generate_from_survey')
+def generate_from_survey():
+    """从10道量表题生成学习材料"""
+    try:
+        q1 = int(request.args.get('q1', 0))
+        q2 = int(request.args.get('q2', 0))
+        q3 = int(request.args.get('q3', 0))
+        q4 = int(request.args.get('q4', 0))
+        q5 = int(request.args.get('q5', 0))
+        q6 = int(request.args.get('q6', 0))
+        q7 = int(request.args.get('q7', 0))
+        q8 = int(request.args.get('q8', 0))
+        q9 = int(request.args.get('q9', 0))
+        q10 = int(request.args.get('q10', 0))
+    except ValueError:
+        return "参数格式错误，请重新作答", 400
+
+    # ===== 计算 MapScore（第8题反向） =====
+    o_mean = (q1 + q2 + q3 + q4 + q5) / 5
+    v_mean = (q6 + q7 + (8 - q8) + q9 + q10) / 5
+    mapScore = round(((v_mean - o_mean + 6) / 12) * 100, 2)
+
+    # ===== 调用 DeepSeek API =====
+    try:
+        response = requests.post(
+            DEEPSEEK_API_URL,
+            headers={
+                'Authorization': f'Bearer {DEEPSEEK_API_KEY}',
+                'Content-Type': 'application/json'
+            },
+            json={
+                'model': 'deepseek-chat',
+                'messages': [
+                    {'role': 'system', 'content': SYSTEM_PROMPT},
+                    {'role': 'user', 'content': str(mapScore)}
+                ],
+                'temperature': 0.1,
+                'max_tokens': 4000
+            },
+            timeout=30
+        )
+        result = response.json()
+        ai_output = result['choices'][0]['message']['content']
+    except Exception as e:
+        return f"材料生成失败，请稍后重试。错误信息：{str(e)}", 500
+
+    # ===== 解析AI输出 =====
+    lines = ai_output.strip().split('\n')
+    materials = []
+    code = ''
+
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+        if line.startswith('验证码：'):
+            code = line.replace('验证码：', '').strip()
+            continue
+        if line.startswith('【画面想象】'):
+            content = line.replace('【画面想象】', '').strip()
+            materials.append({
+                'type': 'visual',
+                'prefix': '【画面想象】',
+                'content': content
+            })
+        elif line.startswith('【要点记忆】'):
+            content = line.replace('【要点记忆】', '').strip()
+            materials.append({
+                'type': 'verbal',
+                'prefix': '【要点记忆】',
+                'content': content
+            })
+
+    visual_count = sum(1 for m in materials if m['type'] == 'visual')
+    verbal_count = sum(1 for m in materials if m['type'] == 'verbal')
+
+    if not code:
+        code = str(random.randint(1000, 9999))
+
+    return render_template_string(
+        HTML_TEMPLATE,
+        score=mapScore,
+        materials=materials,
+        code=code,
+        visual_count=visual_count,
+        verbal_count=verbal_count
+    )
