@@ -477,7 +477,7 @@ def index():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
-   @app.route('/generate_from_survey')
+@app.route('/generate_from_survey')
 def generate_from_survey():
     """从10道量表题生成学习材料"""
     try:
@@ -563,4 +563,4 @@ def generate_from_survey():
         code=code,
         visual_count=visual_count,
         verbal_count=verbal_count
-    )
+    )   
